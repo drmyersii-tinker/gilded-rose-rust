@@ -21,81 +21,74 @@ fn main() {
         for item in &items {
             println!("{:?}", item);
         }
-        UpdateQuality(&mut items[..]);
+        update_quality(&mut items[..]);
     }
 }
 
-fn UpdateQuality(items: &mut [Item])
+fn decrease_quality(item: &mut Item)
 {
-    for i in 0..items.len() 
+    if item.quality > 0
     {
-        if (items[i].name != "Aged Brie" && items[i].name != "Backstage passes to a TAFKAL80ETC concert")
+        item.quality -= 1
+    }
+}
+
+fn increase_quality(item: &mut Item)
+{
+    if item.quality < 50
+    {
+        item.quality += 1
+    }
+}
+
+fn update_quality(items: &mut [Item])
+{
+    for item in items
+    {
+        match item.name
         {
-            if (items[i].quality > 0)
-            {
-                if (items[i].name != "Sulfuras, Hand of Ragnaros")
+            "Aged Brie" => {
+                increase_quality(item);
+            },
+            "Backstage passes to a TAFKAL80ETC concert" => {
+                increase_quality(item);
+
+                if item.sell_in < 11
                 {
-                    items[i].quality = items[i].quality - 1;
+                    increase_quality(item);
                 }
+
+                if item.sell_in < 6
+                {
+                    increase_quality(item);
+                }
+            },
+            "Sulfuras, Hand of Ragnaros" => {
+
+            },
+            _ => {
+                decrease_quality(item);
             }
         }
-        else
+
+        if item.name != "Sulfuras, Hand of Ragnaros"
         {
-            if (items[i].quality < 50)
+            item.sell_in = item.sell_in - 1;
+        }
+
+        if item.sell_in < 0
+        {
+            if item.name == "Aged Brie"
             {
-                items[i].quality = items[i].quality + 1;
-
-                if (items[i].name == "Backstage passes to a TAFKAL80ETC concert")
-                {
-                    if (items[i].sell_in < 11)
-                    {
-                        if (items[i].quality < 50)
-                        {
-                            items[i].quality = items[i].quality + 1;
-                        }
-                    }
-
-                    if (items[i].sell_in < 6)
-                    {
-                        if (items[i].quality < 50)
-                        {
-                            items[i].quality = items[i].quality + 1;
-                        }
-                    }
-                }
+                increase_quality(item);
             }
-        }
-
-        if (items[i].name != "Sulfuras, Hand of Ragnaros")
-        {
-            items[i].sell_in = items[i].sell_in - 1;
-        }
-
-        if (items[i].sell_in < 0)
-        {
-            if (items[i].name != "Aged Brie")
+            else if item.name == "Backstage passes to a TAFKAL80ETC concert"
             {
-                if (items[i].name != "Backstage passes to a TAFKAL80ETC concert")
-                {
-                    if (items[i].quality > 0)
-                    {
-                        if (items[i].name != "Sulfuras, Hand of Ragnaros")
-                        {
-                            items[i].quality = items[i].quality - 1;
-                        }
-                    }
-                }
-                else
-                {
-                    items[i].quality = items[i].quality - items[i].quality;
-                }
+                item.quality = 0;
             }
             else
             {
-                if (items[i].quality < 50)
-{
-                    items[i].quality = items[i].quality + 1;
-                }
+                decrease_quality(item)
             }
         }
     }
@@ -106,7 +99,23 @@ fn normal_items_decrease_quality() {
     let mut items = vec![
         Item { name: "+5 Dexterity Vest", sell_in: 10, quality: 20 },
     ];
-    UpdateQuality(&mut items[..]);
+    update_quality(&mut items[..]);
     assert_eq!(items[0].sell_in, 9);
     assert_eq!(items[0].quality, 19);
+}
+
+#[test]
+fn aged_brie_increases_quality()
+{
+    let mut items = vec![
+        Item { name: "Aged Brie", sell_in: 2, quality: 0 },
+    ];
+
+    update_quality(&mut items[..]);
+    assert_eq!(items[0].sell_in, 1);
+    assert_eq!(items[0].quality, 1);
+    update_quality(&mut items[..]);
+    update_quality(&mut items[..]);
+    assert_eq!(items[0].sell_in, -1);
+    assert_eq!(items[0].quality, 4);
 }
